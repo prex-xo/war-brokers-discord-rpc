@@ -42,12 +42,28 @@ Every region on the War Brokers server list:
   - Linux: usually already installed (`python3 --version` to check)
 
 ## Quick install
-1. Download [`install.py`](https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py) (right-click → Save link as).
-2. **Quit Steam fully** (Steam menu → Exit/Quit). Steam overwrites its settings when it closes, so it has to be closed while the installer changes them.
-3. Run it:
-   - macOS / Linux: `python3 install.py`
-   - Windows: `python install.py`, or double-click it
-4. Open Steam and press **Play** on War Brokers.
+**First, quit Steam fully** (Steam menu → Exit/Quit). Then copy-paste one line:
+
+**macOS / Linux** (Terminal):
+```bash
+curl -fsSL https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py -o install.py && python3 install.py
+```
+
+**Windows** (PowerShell):
+```powershell
+irm https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py -OutFile install.py; python install.py
+```
+
+Then open Steam and press **Play** on War Brokers. That's it.
+
+<details>
+<summary>Prefer not to use a command line?</summary>
+
+1. On this page, click **Code → Download ZIP** and unzip it.
+2. Quit Steam fully.
+3. Windows: double-click `install.py`. macOS / Linux: open a terminal in the unzipped folder and run `python3 install.py`.
+4. Open Steam and press **Play**.
+</details>
 
 The installer:
 - Puts `wb_rpc.py` in the game's own folder (`Trebuchet Entertainment LLC/wb-rpc`, next to the game's logs), so it isn't deleted by accident. With Flatpak Steam that folder is inside Steam's sandbox, which Flatpak Steam needs.

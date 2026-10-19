@@ -6,20 +6,20 @@ Show your War Brokers match on your Discord profile: game mode, map (with the ma
 
 Between matches it shows **In menu**, and it clears when you quit the game.
 
-- One file, standard-library Python only. Nothing to `pip install`.
+- One script (`wb_rpc.py`) plus an optional installer (`install.py`). Standard-library Python only, nothing to `pip install`.
 - Starts and stops with the game through Steam launch options.
 - No browser extension, no userscript, no server, no account.
-- Read-only: it reads the game's log file. It doesn't touch game memory, files or network traffic.
+- It only reads the game's log file. It doesn't touch game memory, game files or network traffic. The installer changes one Steam setting (War Brokers' launch option) and backs it up first.
 
 ## Platforms
 | | Status |
 |---|---|
 | macOS | Tested |
-| Windows | Should work, not tested yet |
-| Linux (Flatpak Steam, Arch) | Confirmed working by a community tester |
+| Windows | Working for a community tester (manual install, `python` launch command) |
+| Linux (Flatpak Steam, Arch) | Working for a community tester (manual log path; automatic detection added since) |
 | Linux (native or Proton) | Should work, not tested yet |
 
-Reports from Windows and Linux players are welcome.
+`install.py` is new: tested against copies of real Steam settings on macOS, not yet on a live Windows or Linux install. Reports are welcome.
 
 ## Supported servers
 Every region on the War Brokers server list:
@@ -39,6 +39,7 @@ Every region on the War Brokers server list:
 - Python 3.9 or newer
   - macOS: already installed (`/usr/bin/python3`). If it asks to install developer tools, accept.
   - Windows: install from [python.org](https://www.python.org/downloads/)
+  - Linux: usually already installed (`python3 --version` to check)
 
 ## Quick install
 1. Download [`install.py`](https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py) (right-click → Save link as).
@@ -76,7 +77,9 @@ Run it again any time to update. To install without touching Steam's settings: `
    Replace `PATH/TO` with the full path to where you saved the file (e.g. `/home/you/wb_rpc.py`). On macOS the line must start with the file path, not `python3`; otherwise Steam fails with *OS Error 260*.
 4. Press **Play**.
 
-To remove it, clear the launch options.
+## Uninstall
+1. Clear War Brokers' launch options in Steam (right-click → Properties → Launch Options).
+2. Delete the `wb-rpc` folder (from the installer) or wherever you saved `wb_rpc.py`.
 
 ### Without launch options
 Start the game normally, then run:
@@ -113,6 +116,10 @@ Log locations:
 The script checks these automatically (and, on Linux, searches `.var`, `snap`, `.local`, `.steam` and `.config` if none match) and uses the newest log. If it still can't find it, see below.
 
 ## Troubleshooting
+- **Installer says Steam is open:** quit Steam fully (Steam menu → Exit/Quit, not just closing the window), then press Enter. Or type `s` to skip and paste the launch option it shows you.
+- **Installer couldn't set the launch option** (Steam not found, or the setting looked unusual): it prints the line to paste instead. Nothing was changed.
+- **Undo the installer's Steam change:** with Steam closed, replace `localconfig.vdf` with `localconfig.vdf.wb-rpc-backup` in the same folder (`Steam/userdata/<your id>/config/`), or just clear the launch options in Steam.
+- **Steam shows "OS Error 260" (macOS):** the launch option must start with the quoted path to `wb_rpc.py`, not with `python3`. Run the installer again, or fix it by hand.
 - **"Can't find the game's Player.log" in `wb_rpc.log`, or it never reacts to the game:** find the log yourself and tell the script where it is. Linux/macOS:
   ```bash
   find ~ -type d -name "Trebuchet Entertainment LLC" 2>/dev/null

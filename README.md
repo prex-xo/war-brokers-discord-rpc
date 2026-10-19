@@ -42,14 +42,18 @@ Every region on the War Brokers server list:
 
 ## Quick install
 1. Download [`install.py`](https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py) (right-click → Save link as).
-2. Run it:
+2. **Quit Steam fully** (Steam menu → Exit/Quit). Steam overwrites its settings when it closes, so it has to be closed while the installer changes them.
+3. Run it:
    - macOS / Linux: `python3 install.py`
    - Windows: `python install.py`, or double-click it
-3. It installs `wb_rpc.py`, then shows your Steam launch option and copies it to the clipboard. In Steam, right-click **War Brokers** → **Properties** → **Launch Options**, paste it, and press **Play**.
+4. Open Steam and press **Play** on War Brokers.
 
-Run the installer again any time to update.
+The installer:
+- Puts `wb_rpc.py` in the game's own folder (`Trebuchet Entertainment LLC/wb-rpc`, next to the game's logs), so it isn't deleted by accident. With Flatpak Steam that folder is inside Steam's sandbox, which Flatpak Steam needs.
+- Sets the War Brokers launch option in Steam for your Steam account. It only changes that one setting, backs up the settings file first (`localconfig.vdf.wb-rpc-backup`), and asks before replacing any launch options you already had.
+- If Steam is still open or its settings can't be found, it shows the launch option to paste yourself (Steam → right-click War Brokers → Properties → Launch Options) and copies it to your clipboard.
 
-It installs to `~/Library/wb-rpc` (macOS), `%LOCALAPPDATA%\wb-rpc` (Windows), or `~/.local/share/wb-rpc` (Linux). With Flatpak Steam it installs inside Steam's sandbox (`~/.var/app/com.valvesoftware.Steam/data/wb-rpc`), because Flatpak Steam can't run files from the rest of your home folder.
+Run it again any time to update. To install without touching Steam's settings: `python3 install.py --no-steam`.
 
 ## Manual install
 

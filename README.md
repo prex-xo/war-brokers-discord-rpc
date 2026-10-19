@@ -42,19 +42,36 @@ Every region on the War Brokers server list:
   - Linux: usually already installed (`python3 --version` to check)
 
 ## Quick install
-**First, quit Steam fully** (Steam menu → Exit/Quit). Then copy-paste one line:
 
-**macOS / Linux** (Terminal):
-```bash
-curl -fsSL https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py -o install.py && python3 install.py
-```
+### Windows
+1. **Install Python** (skip if you already have it): download it from [python.org](https://www.python.org/downloads/), run the installer and **tick "Add python.exe to PATH"** on the first screen before clicking Install.
+2. **Quit Steam fully:** right-click the Steam icon in the taskbar tray (bottom-right, next to the clock; click the **^** arrow if you don't see it) → **Exit**. Just closing the window isn't enough.
+3. **Open PowerShell:** press the **Windows key**, type `powershell`, press **Enter**. A blue or black window opens. No admin needed.
+4. **Copy this line, then right-click inside the PowerShell window to paste it**, and press **Enter**:
+   ```powershell
+   irm https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py -OutFile install.py; python install.py
+   ```
+5. When it says it's done, open Steam and press **Play** on War Brokers.
 
-**Windows** (PowerShell):
-```powershell
-irm https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py -OutFile install.py; python install.py
-```
+If it says `python` isn't recognized, or the Microsoft Store opens instead, Python isn't installed with "Add to PATH": redo step 1, then close and reopen PowerShell.
 
-Then open Steam and press **Play** on War Brokers. That's it.
+### macOS
+1. **Quit Steam fully:** click Steam in the menu bar → **Quit Steam** (or press **Cmd+Q** in Steam).
+2. **Open Terminal:** press **Cmd+Space**, type `terminal`, press **Enter**.
+3. **Paste this line** (**Cmd+V**) and press **Enter**:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py -o install.py && python3 install.py
+   ```
+   If macOS asks to install "command line developer tools", click **Install**, wait for it to finish, then paste the line again.
+4. Open Steam and press **Play** on War Brokers.
+
+### Linux
+1. **Quit Steam fully** (Steam menu → **Exit**).
+2. **Open a terminal** (often **Ctrl+Alt+T**), paste this line (**Ctrl+Shift+V**) and press **Enter**:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py -o install.py && python3 install.py
+   ```
+3. Open Steam and press **Play** on War Brokers.
 
 <details>
 <summary>Prefer not to use a command line?</summary>

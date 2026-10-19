@@ -31,6 +31,11 @@ from typing import Optional
 CLIENT_ID = "1503338987899846816"
 
 SERVER_LIST_URL = "https://store1.warbrokers.io/314/server_list.php?location={region}"
+# Only set this if the script can't find the game's Player.log by itself.
+# Example: "/home/you/.var/app/com.valvesoftware.Steam/.config/unity3d/Trebuchet Entertainment LLC/War_Brokers/Player.log"
+# The WB_RPC_LOG environment variable does the same thing.
+PLAYER_LOG_PATH = ""
+
 REFRESH_SECONDS = 30  # how often player count / mode is re-checked in a match
 TICK = 1.0
 
@@ -111,25 +116,58 @@ def log(msg: str) -> None:
         pass
 
 
-def player_log_path() -> Path:
-    """Newest War Brokers Player.log. Searches every product folder under the
-    publisher, plus the Proton prefix for Linux players running the Windows build."""
+COMPANY = "Trebuchet Entertainment LLC"
+_search_cache = {"at": -1e9, "found": None}
+
+
+def _deep_search(home: Path) -> Optional[Path]:
+    """Last resort: look for the publisher folder in the places Steam installs can put it
+    (Flatpak, Snap, Steam's own folders). Depth-limited and throttled so it stays cheap."""
+    if time.time() - _search_cache["at"] < 30:
+        return _search_cache["found"]
+    _search_cache["at"] = time.time()
+    found = []
+    for root in (".var", "snap", ".local/share", ".steam", ".config"):
+        top = home / root
+        if not top.is_dir():
+            continue
+        for dirpath, dirs, _files in os.walk(top, onerror=lambda e: None):
+            depth = len(Path(dirpath).relative_to(top).parts)
+            if COMPANY in dirs:
+                found += (Path(dirpath) / COMPANY).glob("*/Player.log")
+            if depth >= 8:
+                dirs[:] = []
+    _search_cache["found"] = max(found, key=lambda p: p.stat().st_mtime) if found else None
+    return _search_cache["found"]
+
+
+def player_log_path() -> Optional[Path]:
+    """The game's Player.log: your own setting first, then the usual places per OS,
+    then a limited search. Returns None if it can't be found (yet)."""
+    manual = PLAYER_LOG_PATH or os.environ.get("WB_RPC_LOG", "")
+    if manual:
+        return Path(manual).expanduser()
     home = Path.home()
-    company = "Trebuchet Entertainment LLC"
     if sys.platform == "darwin":
-        bases = [home / "Library/Logs" / company]
+        bases = [home / "Library/Logs" / COMPANY]
     elif sys.platform == "win32":
-        bases = [home / "AppData/LocalLow" / company]
+        bases = [home / "AppData/LocalLow" / COMPANY]
     else:
-        bases = [home / ".config/unity3d" / company]
+        config = Path(os.environ.get("XDG_CONFIG_HOME") or home / ".config")
+        bases = [config / "unity3d" / COMPANY,
+                 home / ".config/unity3d" / COMPANY,
+                 home / ".var/app/com.valvesoftware.Steam/.config/unity3d" / COMPANY,  # Flatpak Steam
+                 home / "snap/steam/common/.config/unity3d" / COMPANY]                # Snap Steam
+        # Windows build under Proton: native, Flatpak and Snap Steam folders
         for steam in (home / ".steam/steam", home / ".local/share/Steam",
-                      home / ".var/app/com.valvesoftware.Steam/.local/share/Steam"):
+                      home / ".var/app/com.valvesoftware.Steam/.local/share/Steam",
+                      home / "snap/steam/common/.local/share/Steam"):
             bases.append(steam / "steamapps/compatdata/750470/pfx/drive_c/users/steamuser"
-                                 "/AppData/LocalLow" / company)
+                                 "/AppData/LocalLow" / COMPANY)
     found = [p for base in bases for p in base.glob("*/Player.log")]
     if found:
         return max(found, key=lambda p: p.stat().st_mtime)
-    return bases[0] / "War_Brokers" / "Player.log"
+    return _deep_search(home) if sys.platform not in ("darwin", "win32") else None
 
 
 # ── Discord IPC (https://discord.com/developers/docs/topics/rpc) ──────────────
@@ -367,10 +405,13 @@ class LogFollower:
 
     def __init__(self, path: Path):
         self.path = path
+        self.warned = False
         self.inode, self.pos = self._stat()
         self.partial = ""
 
     def _stat(self):
+        if self.path is None:
+            return None, 0
         try:
             st = self.path.stat()
             return st.st_ino, st.st_size
@@ -380,8 +421,19 @@ class LogFollower:
     def lines(self):
         inode, size = self._stat()
         if inode is None:
-            self.path = player_log_path()  # first launch: the log may appear somewhere else
-            return []
+            self.path = player_log_path()  # the log may appear later, or somewhere else
+            if self.path is None or not self.path.exists():
+                if not self.warned:
+                    self.warned = True
+                    log("Can't find the game's Player.log yet. If it never appears, set "
+                        "PLAYER_LOG_PATH at the top of wb_rpc.py (see the README).")
+                return []
+            self.warned = False
+            log(f"Found log: {self.path}")
+            self.inode, self.pos = None, 0  # read it from the start
+            inode, size = self._stat()
+            if inode is None:
+                return []
         if inode != self.inode or size < self.pos:
             self.inode, self.pos, self.partial = inode, 0, ""
         if size == self.pos:
@@ -407,9 +459,17 @@ def resolve_app(cmd: list) -> list:
 
 
 def main() -> int:
-    LOG_FILE.write_text("", encoding="utf-8")
-    game_cmd = resolve_app(sys.argv[1:]) if sys.argv[1:] else []
+    global LOG_FILE
     log_path = player_log_path()
+    # Keep wb_rpc.log with the game's own logs, not next to the script (e.g. Downloads)
+    if log_path and log_path.parent.parent.name == COMPANY and log_path.parent.parent.is_dir():
+        LOG_FILE = log_path.parent.parent / "wb_rpc.log"
+    try:
+        LOG_FILE.write_text("", encoding="utf-8")
+    except OSError:
+        LOG_FILE = HERE / "wb_rpc.log"
+        LOG_FILE.write_text("", encoding="utf-8")
+    game_cmd = resolve_app(sys.argv[1:]) if sys.argv[1:] else []
     follower = LogFollower(log_path)  # remember the old log before the game replaces it
 
     proc = None
@@ -417,7 +477,7 @@ def main() -> int:
         log(f"Starting game: {' '.join(game_cmd)}")
         proc = subprocess.Popen(game_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
-        log(f"Watching {log_path} (Ctrl+C to stop)")
+        log(f"Watching {log_path or 'for Player.log'} (Ctrl+C to stop)")
 
     if CLIENT_ID.startswith("PUT_"):
         log("Set CLIENT_ID in wb_rpc.py to your Discord application ID. Presence is off.")

@@ -16,6 +16,7 @@ Between matches it shows **In menu**, and it clears when you quit the game.
 |---|---|
 | macOS | Tested |
 | Windows | Should work, not tested yet |
+| Linux (Flatpak Steam, Arch) | Confirmed working by a community tester |
 | Linux (native or Proton) | Should work, not tested yet |
 
 Reports from Windows and Linux players are welcome.
@@ -41,23 +42,23 @@ Every region on the War Brokers server list:
 
 ## Install
 
-1. Download `wb_rpc.py` and put it somewhere it will stay.
+1. Download `wb_rpc.py` and put it anywhere that it will stay. Below, `PATH/TO/wb_rpc.py` means wherever you saved it.
 2. macOS / Linux only: make it runnable once:
    ```bash
-   chmod +x ~/Games/wb_rpc.py
+   chmod +x PATH/TO/wb_rpc.py
    ```
 3. In Steam, right-click **War Brokers** → **Properties** → **Launch Options**, and paste:
 
    **macOS / Linux**
    ```
-   "/Users/YOUR_NAME/Games/wb_rpc.py" %command%
+   "PATH/TO/wb_rpc.py" %command%
    ```
    **Windows**
    ```
-   pyw "C:\Games\wb_rpc.py" %command%
+   python "PATH\TO\wb_rpc.py" %command%
    ```
-   `pyw` comes with the python.org installer and runs the script without a console window.
-   Use the real path to where you saved the file. On macOS the line must start with the file path, not `python3`; otherwise Steam fails with *OS Error 260*.
+   Use `python` (or `python3`, whichever works in your Command Prompt). `pyw` isn't always installed, and `py` works too if you have the Python launcher. A console window stays open while you play.
+   Replace `PATH/TO` with the full path to where you saved the file (e.g. `/home/you/wb_rpc.py`). On macOS the line must start with the file path, not `python3`; otherwise Steam fails with *OS Error 260*.
 4. Press **Play**.
 
 To remove it, clear the launch options.
@@ -90,16 +91,23 @@ Log locations:
 - macOS: `~/Library/Logs/Trebuchet Entertainment LLC/War_Brokers/Player.log`
 - Windows: `%USERPROFILE%\AppData\LocalLow\Trebuchet Entertainment LLC\War_Brokers\Player.log`
 - Linux: `~/.config/unity3d/Trebuchet Entertainment LLC/War_Brokers/Player.log`
+- Linux, Flatpak Steam: `~/.var/app/com.valvesoftware.Steam/.config/unity3d/Trebuchet Entertainment LLC/War_Brokers/Player.log`
+- Linux, Snap Steam: `~/snap/steam/common/.config/unity3d/Trebuchet Entertainment LLC/War_Brokers/Player.log`
 - Linux with Proton: inside `steamapps/compatdata/750470/pfx/drive_c/users/steamuser/AppData/LocalLow/...`
 
-The script searches these automatically and uses the newest log.
+The script checks these automatically (and, on Linux, searches `.var`, `snap`, `.local`, `.steam` and `.config` if none match) and uses the newest log. If it still can't find it, see below.
 
 ## Troubleshooting
+- **"Can't find the game's Player.log" in `wb_rpc.log`, or it never reacts to the game:** find the log yourself and tell the script where it is. Linux/macOS:
+  ```bash
+  find ~ -type d -name "Trebuchet Entertainment LLC" 2>/dev/null
+  ```
+  Then set `PLAYER_LOG_PATH` near the top of `wb_rpc.py` to `<that folder>/War_Brokers/Player.log`. You can also set the `WB_RPC_LOG` environment variable instead.
 - **Nothing on Discord:** Discord must be the desktop app and already open. Check *Settings → Activity Privacy → Share your detected activities* is on.
-- **Debug output:** see `wb_rpc.log` next to the script. It's recreated on every launch. It includes your Steam username, so check it before posting it in an issue.
+- **Debug output:** see `wb_rpc.log`, saved in the `Trebuchet Entertainment LLC` folder next to the game's own logs (next to the script if that folder isn't found). It's recreated on every launch and includes your Steam username, so check it before posting it in an issue.
 - **Player count shows 0, or no region for a moment:** the server list updates a few seconds behind the game; it corrects itself on the next check (up to 30 seconds).
 - **Clan server shown as the public region:** a clan server and a public server can share an IP. If both are on the same map, the script can't tell them apart and follows the region tab you picked.
-- **Linux, Discord installed as Flatpak or Snap:** the script looks for Discord's socket in those locations too; if it still can't connect, check `wb_rpc.log`.
+- **Linux, Discord installed as Flatpak or Snap:** the script looks for Discord's socket in those locations too. With Flatpak Steam, the sandbox may need access to Discord's socket (for example with Flatseal, allow `xdg-run/app/com.discordapp.Discord`). If it still can't connect, check `wb_rpc.log`.
 
 ## Using your own Discord application
 The script ships with a Discord application ID named "War Brokers". Application IDs aren't secret. To use your own, create one at <https://discord.com/developers/applications> and put its **Application ID** in `CLIENT_ID` at the top of `wb_rpc.py`. The application's name is what Discord shows after "Playing".

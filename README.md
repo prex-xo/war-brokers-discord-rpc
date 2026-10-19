@@ -40,7 +40,18 @@ Every region on the War Brokers server list:
   - macOS: already installed (`/usr/bin/python3`). If it asks to install developer tools, accept.
   - Windows: install from [python.org](https://www.python.org/downloads/)
 
-## Install
+## Quick install
+1. Download [`install.py`](https://raw.githubusercontent.com/prex-xo/war-brokers-discord-rpc/main/install.py) (right-click → Save link as).
+2. Run it:
+   - macOS / Linux: `python3 install.py`
+   - Windows: `python install.py`, or double-click it
+3. It installs `wb_rpc.py`, then shows your Steam launch option and copies it to the clipboard. In Steam, right-click **War Brokers** → **Properties** → **Launch Options**, paste it, and press **Play**.
+
+Run the installer again any time to update.
+
+It installs to `~/Library/wb-rpc` (macOS), `%LOCALAPPDATA%\wb-rpc` (Windows), or `~/.local/share/wb-rpc` (Linux). With Flatpak Steam it installs inside Steam's sandbox (`~/.var/app/com.valvesoftware.Steam/data/wb-rpc`), because Flatpak Steam can't run files from the rest of your home folder.
+
+## Manual install
 
 1. Download `wb_rpc.py` and put it anywhere that it will stay. Below, `PATH/TO/wb_rpc.py` means wherever you saved it.
 2. macOS / Linux only: make it runnable once:
